@@ -1,0 +1,2 @@
+# Machine_Learning_YetiPhenics_with_Generation_Price
+Execute machine learning on Generated Prices
