@@ -1,4 +1,4 @@
-# Machine_Learning_YetiPhenix_with_Generation_Price
+# Machine_Learning_YetiPhoenix_with_Generation_Price
 Execute machine learning on Generated Prices
 ## Preface: Calibrating a Neural Pricer for Exotic Options in the Black-Scholes Model
 Welcome to this blog series on advanced option pricing using machine learning! In the world of quantitative finance, pricing exotic options—such as barrier options, Asians, or multi-asset structures like Worst-of-N—can be computationally intensive, especially under stochastic models. Traditional methods like Monte Carlo simulations or finite difference schemes work well but scale poorly for real-time calibration or high-dimensional problems.
