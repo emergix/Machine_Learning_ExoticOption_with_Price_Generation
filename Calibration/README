@@ -1,1 +1,152 @@
 
+# 📘 Project Training Workflow
+
+This document describes the **machine learning workflow** we use in this project, based on **PyTorch** with customizable training utilities.
+
+---
+
+## 🔧 Data Preparation
+
+- Input data comes from one or multiple **CSV/Excel files**.
+- Files are concatenated into a single dataset:
+
+```python
+import pandas as pd
+
+dfs = [pd.read_csv(f, header=None) for f in datafiles]
+dataframe = pd.concat(dfs, ignore_index=True)
+dataset = dataframe.values
+
+X_rough = dataset[1:, 1:params.INPUT_DIM+1]
+Y_rough = dataset[1:, params.INPUT_GOAL]
+
+
+Data is then split into train/test sets:
+
+from torch.utils.data import TensorDataset, random_split, DataLoader
+import torch
+
+X = torch.tensor(X_rough, dtype=torch.float32)
+y = torch.tensor(Y_rough, dtype=torch.float32)
+dataset = TensorDataset(X, y)
+
+n_train = int(0.9 * len(dataset))
+n_test = len(dataset) - n_train
+train_ds, test_ds = random_split(dataset, [n_train, n_test])
+
+train_loader = DataLoader(train_ds, batch_size=64, shuffle=True)
+test_loader  = DataLoader(test_ds, batch_size=64)
+## 🧠 Model Definition
+
+We use a flexible MLP (multi-layer perceptron) or LSTM, defined in train_pytorch_customizable_notebook.py.
+
+Example:
+
+from train_pytorch_customizable_notebook import MLP
+
+model = MLP(in_features=input_size,
+            out_features=1,
+            hidden=[256,128,64],
+            activation="relu",
+            dropout=0.1)
+
+The architecture is configurable via a TrainConfig dataclass:
+
+cfg = TrainConfig(
+    model="mlp",
+    mlp_dims=[256,128,64],
+    activation="relu",
+    loss="mse",
+    opt="adamw",
+    lr=1e-3,
+    epochs=100,
+    batch_size=256,
+    patience=10,
+    device="cuda",
+    out_dir="outputs/run1"
+)
+
+## 🚀 Training Loop
+
+We use the utility run_training_with_loaders(cfg, train_loader, test_loader).
+
+Features included:
+
+Mixed precision (AMP) for GPU speedup
+
+Gradient clipping
+
+Early stopping
+
+Learning rate schedulers (step/cosine)
+
+Checkpointing (best.pt, last.pt)
+
+Progress bar (via tqdm)
+
+Timing per epoch & total time
+
+Logs show train/val losses and metrics (e.g. RMSE, accuracy).
+
+## 💾 Saving & Resuming
+
+At the end of training, we save:
+
+Checkpoints: best.pt (best validation metric) and last.pt (last epoch)
+
+Config & metadata: config.json, meta.json
+
+Feature statistics (optional) for normalization at inference
+
+Helpers:
+
+save_training_bundle(...) → saves model + optimizer + config + stats
+
+load_for_inference(...) → reloads for prediction
+
+resume_training(...) → reloads for continuing training from a checkpoint
+
+## 🔍 Evaluation
+
+After training:
+
+y_true, y_pred = evaluate_model(model, test_loader, device)
+
+## 🎯 Inference
+
+To predict on a new vector X:
+from predict_utils import predict_one
+
+x_new = [s1, s2, s3, mu1, mu2, mu3, ...]  # feature vector
+y_hat = predict_one(model, x_new, device="cuda", expected_input_size=results["input_size"])
+print("Predicted value:", y_hat)
+
+## 📊 Visualization
+Training/validation curves plotted from results["history"]
+
+Calibration plots (true vs. predicted, regression line)
+
+Histograms of residuals
+
+## ✅ Summary
+
+This framework provides:
+
+Flexible data ingestion (CSV/Excel, multiple files)
+
+Configurable neural networks (MLP, LSTM, or custom)
+
+Full training utilities (logging, early stopping, AMP, checkpoints)
+
+Saving/loading for reproducibility
+
+Quantitative calibration scoring
+
+It is designed to be modular, extensible, and robust for financial calibration and beyond.
+
+
+
+
+
+
+
